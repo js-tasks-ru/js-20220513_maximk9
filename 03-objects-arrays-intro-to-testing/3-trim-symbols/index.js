@@ -4,8 +4,8 @@
  * @param {number} size - the allowed size of consecutive identical symbols
  * @returns {string} - the new string without extra symbols according passed size
  */
-export function trimSymbols(string, size = -1) {
-    if (size === -1) {
+export function trimSymbols(string, size) {
+    if (size === undefined) {
         return string;
     }
 
