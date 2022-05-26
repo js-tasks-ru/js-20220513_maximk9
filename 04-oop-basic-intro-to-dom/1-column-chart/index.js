@@ -31,7 +31,7 @@ export default class ColumnChart {
         }
 
         const containerElement = document.createElement('div');
-        containerElement.className = 'chart__container';
+        containerElement.className = 'column-chart__container';
 
         if (this.value !== undefined) {
             const valueElement = document.createElement('div');
@@ -57,7 +57,7 @@ export default class ColumnChart {
         const bodyElement = this.element.querySelector('.column-chart__chart');
         bodyElement.innerHTML = '';
 
-        if (this.data) {  
+        if (this.data && this.data.length > 0) {  
             const max = Math.max(...this.data);
             this.data.forEach(v => {
                 const columnElement = document.createElement('div');
