@@ -13,42 +13,41 @@ export default class ColumnChart {
     }
 
     render() {
-        let e = document.createElement('div');
-        e.className = 'column-chart';
-        e.setAttribute('style', '--chart-height: ' + this.chartHeight);
+        const e = this.createElement('div', 'column-chart', {style: '--chart-height: ' + this.chartHeight})
 
-        const titleElement = document.createElement('div');
+        const titleElement = this.createElement('div', 'column-chart__title');
         titleElement.append(document.createTextNode('Total ' + (this.label ?? '')));
-        titleElement.className = 'column-chart__title';
         e.append(titleElement);
 
         if (this.link) {
-            const linkElement = document.createElement('a');
-            linkElement.className = 'column-chart__link';
+            const linkElement = this.createElement('div', 'column-chart__link', {href: this.linke})
             linkElement.append(document.createTextNode('View all'));
-            linkElement.setAttribute('href', this.link);
             titleElement.append(linkElement);
         }
 
-        const containerElement = document.createElement('div');
-        containerElement.className = 'column-chart__container';
+        const containerElement = this.createElement('div', 'column-chart__container');
 
         if (this.value !== undefined) {
-            const valueElement = document.createElement('div');
+            const valueElement = this.createElement('div', 'column-chart__header');
             valueElement.dataset.element = 'header';
-            valueElement.className = 'column-chart__header';
             valueElement.append(document.createTextNode(this.formatHeading(this.value)));
             containerElement.append(valueElement);
         }
 
-        const bodyElement = document.createElement('div');
+        const bodyElement = this.createElement('div', 'column-chart__chart');
         bodyElement.dataset.element = 'body';
-        bodyElement.className = 'column-chart__chart';
         containerElement.append(bodyElement);
         e.append(containerElement);
 
         this.element = e;
         this.update(this.data);
+    }
+
+    createElement(tag, className, attributes = {}) {
+        const e = document.createElement(tag)
+        e.className = className;
+        Object.entries(attributes).forEach(([attr, value]) => e.setAttribute(attr, value));
+        return e;
     }
 
     update(data) {
