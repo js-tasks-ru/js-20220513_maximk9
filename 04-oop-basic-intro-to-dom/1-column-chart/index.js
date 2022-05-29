@@ -2,52 +2,52 @@ export const defaultHeight = 50;
 
 export default class ColumnChart {
 
-    constructor ({
-        label = '',
-        value = 0, 
-        link = '',
-        formatHeading = (value) => value,
-        data = []
-    } = {}) {
+    constructor (props) {
+        // default settings could be overriden from constructor args
         this.chartHeight = defaultHeight;
-        this.formatHeading = formatHeading;
-        this.label = label;
-        this.link = link;
-        this.value = value;
-        this.data = data;
+        this.formatHeading = (value) => value;
+
+        Object.assign(this, props);
 
         this.render();
     }
 
-    template() {
-        return `
-        <div class="column-chart__title">
-        Total ${this.label}
-        <a href="${this.link}" class="column-chart__link">View all</a>
-        </div>
-        <div class="column-chart__container">
-            <div data-element="header" class="column-chart__header">${this.formatHeading(this.value)}</div>
-            <div data-element="body" class="column-chart__chart">
-        </div>
-        `;
+    render() {
+        const e = this.createElement('div', 'column-chart', {style: '--chart-height: ' + this.chartHeight})
+
+        const titleElement = this.createElement('div', 'column-chart__title');
+        titleElement.append(document.createTextNode('Total ' + (this.label ?? '')));
+        e.append(titleElement);
+
+        if (this.link) {
+            const linkElement = this.createElement('div', 'column-chart__link', {href: this.linke})
+            linkElement.append(document.createTextNode('View all'));
+            titleElement.append(linkElement);
+        }
+
+        const containerElement = this.createElement('div', 'column-chart__container');
+
+        if (this.value !== undefined) {
+            const valueElement = this.createElement('div', 'column-chart__header');
+            valueElement.dataset.element = 'header';
+            valueElement.append(document.createTextNode(this.formatHeading(this.value)));
+            containerElement.append(valueElement);
+        }
+
+        const bodyElement = this.createElement('div', 'column-chart__chart');
+        bodyElement.dataset.element = 'body';
+        containerElement.append(bodyElement);
+        e.append(containerElement);
+
+        this.element = e;
+        this.update(this.data);
     }
 
-    render() {
-        const chartElement = document.createElement('div');
-        chartElement.className='column-chart';
-        chartElement.setAttribute('style', '--chart-height: ' + this.chartHeight);
-        chartElement.innerHTML = this.template();
-
-        if (this.link === undefined) {
-            chartElement.querySelector('.column-chart__link').remove();
-        }
-
-        if (this.value === undefined) {
-            chartElement.querySelector('.column-chart__header').remove();
-        }
-
-        this.element = chartElement;
-        this.update(this.data);
+    createElement(tag, className, attributes = {}) {
+        const e = document.createElement(tag)
+        e.className = className;
+        Object.entries(attributes).forEach(([attr, value]) => e.setAttribute(attr, value));
+        return e;
     }
 
     update(data) {
