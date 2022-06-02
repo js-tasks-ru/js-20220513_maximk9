@@ -6,26 +6,16 @@ export default class DoubleSlider {
         min = 0,
         max = 100,
         formatValue = value => '$' + value,
-        selected = {} } = {}) {
+        selected
+    } = {}) {
 
       this.min = min;
       this.max = max;
       this.formatValue = formatValue;
-      this.selected = {
-          from: selected.from ?? min,
-          to: selected.to ?? max
-      }
+      this.selected = selected ?? { from: min, to: max }
       this.width = this.max - this.min;
 
       this.render()
-    }
-
-    get leftPercents() {
-        return ((this.selected.from - this.min) / this.width * 100).toFixed(1);
-    }
-
-    get rightPercents() {
-        return ((this.max - this.selected.to) / this.width * 100).toFixed(1);
     }
 
     render() {
@@ -58,6 +48,11 @@ export default class DoubleSlider {
         this.subElements.highValue.textContent = this.formatValue(this.selected.to);
     }
 
+    unsubscribe() {
+        document.removeEventListener('pointermove', this.onPointerMove);
+        document.removeEventListener('pointerup', this.onPointerUp);
+    }
+
     onPointerDown(event, thumb) {
         this.currentThumb = thumb;
         document.addEventListener('pointermove', this.onPointerMove);
@@ -65,8 +60,7 @@ export default class DoubleSlider {
     }
 
     onPointerUp = event => {
-        document.removeEventListener('pointermove', this.onPointerMove);
-        document.removeEventListener('pointerup', this.onPointerUp);
+        this.unsubscribe();
         delete this.currentThumb;
 
         this.element.dispatchEvent(new CustomEvent("range-select", {
@@ -78,12 +72,9 @@ export default class DoubleSlider {
         event.preventDefault();
         const clientRect = this.subElements.slider.getBoundingClientRect();
 
-        let offsetX = event.clientX - clientRect.left;
-        if (offsetX < 0) {
-            offsetX = 0;
-        }
-
+        const offsetX = Math.max(event.clientX - clientRect.left, 0);
         const newValue = Math.round((offsetX / clientRect.width) * this.width + this.min);
+
         if (this.currentThumb === 'left') {
             this.selected.from = Math.min(newValue, this.selected.to);
         } else {
@@ -91,6 +82,11 @@ export default class DoubleSlider {
         }
 
         this.updateView();
+    }
+
+    destroy() {
+        this.unsubscribe();
+        this.element.remove();
     }
 
     get template() {
@@ -106,7 +102,11 @@ export default class DoubleSlider {
         </div>`
     }
 
-    destroy() {
-        this.element.remove()
+    get leftPercents() {
+        return ((this.selected.from - this.min) / this.width * 100).toFixed(1);
+    }
+
+    get rightPercents() {
+        return ((this.max - this.selected.to) / this.width * 100).toFixed(1);
     }
 }
