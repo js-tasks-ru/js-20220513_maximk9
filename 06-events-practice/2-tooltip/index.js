@@ -1,3 +1,5 @@
+const tooltipPositionOffset = 10;
+
 class Tooltip {
   static instance;
   element;
@@ -27,17 +29,17 @@ class Tooltip {
 
   handleExit(event) {
     this.element.remove()
-    event.target.removeEventListener('mousemove', this.updatePositionFromEvent)
+    event.target.removeEventListener('pointermove', this.updatePositionFromEvent)
   }
 
   handleEnter(event) {
     this.render(event.target.dataset.tooltip)
-    event.target.addEventListener('mousemove', this.updatePositionFromEvent)
+    event.target.addEventListener('pointermove', this.updatePositionFromEvent)
   }
 
   updatePositionFromEvent(event) {
-    Tooltip.instance.element.style.left = event.offsetX + 10 + 'px';
-    Tooltip.instance.element.style.top = event.offsetY + 10 + 'px';
+    Tooltip.instance.element.style.left = event.offsetX + tooltipPositionOffset + 'px';
+    Tooltip.instance.element.style.top = event.offsetY + tooltipPositionOffset + 'px';
   }
 
   destroy() {
