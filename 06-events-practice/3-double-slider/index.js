@@ -23,15 +23,7 @@ export default class DoubleSlider {
         wrapper.innerHTML = this.template
 
         this.element = wrapper.firstElementChild
-
-        this.subElements = {
-            left: this.element.querySelector('.range-slider__thumb-left'),
-            right: this.element.querySelector('.range-slider__thumb-right'),
-            progress: this.element.querySelector('.range-slider__progress'),
-            slider: this.element.querySelector('.range-slider__inner'),
-            lowValue: this.element.querySelector('[data-element="from"]'),
-            highValue: this.element.querySelector('[data-element="to"]')
-        }
+        this.subElements = this.getSubElements(this.element)
 
         this.updateView()
 
@@ -39,13 +31,23 @@ export default class DoubleSlider {
         this.subElements.right.addEventListener('pointerdown', event => this.onPointerDown(event, 'right'));
     }
 
+    getSubElements(element) {
+        const children = element.querySelectorAll('[data-element]')
+        return [...children].reduce( (target, subElement) => {
+          target[subElement.dataset.element] = subElement;
+          return target;
+        }, {});
+    }
+
     updateView() {
-        this.subElements.left.style.left = this.leftPercents + "%";
-        this.subElements.right.style.right = this.rightPercents + "%";
-        this.subElements.progress.style.left = this.leftPercents + "%";
-        this.subElements.progress.style.right = this.rightPercents + "%";
-        this.subElements.lowValue.textContent = this.formatValue(this.selected.from);
-        this.subElements.highValue.textContent = this.formatValue(this.selected.to);
+        const { left, right, progress, from, to} = this.subElements;
+
+        left.style.left = this.leftPercents + "%";
+        right.style.right = this.rightPercents + "%";
+        progress.style.left = this.leftPercents + "%";
+        progress.style.right = this.rightPercents + "%";
+        from.textContent = this.formatValue(this.selected.from);
+        to.textContent = this.formatValue(this.selected.to);
     }
 
     unsubscribe() {
@@ -93,10 +95,10 @@ export default class DoubleSlider {
         return `
         <div class="range-slider">
           <span data-element="from"></span>
-          <div class="range-slider__inner">
-            <span class="range-slider__progress"></span>
-            <span class="range-slider__thumb-left"></span>
-            <span class="range-slider__thumb-right"></span>
+          <div class="range-slider__inner" data-element="slider">
+            <span class="range-slider__progress" data-element="progress"></span>
+            <span class="range-slider__thumb-left" data-element="left"></span>
+            <span class="range-slider__thumb-right" data-element="right"></span>
           </div>
           <span data-element="to"></span>
         </div>`

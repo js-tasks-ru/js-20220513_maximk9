@@ -3,6 +3,7 @@ const tooltipPositionOffset = 10;
 class Tooltip {
   static instance;
   element;
+  currentTarget;
 
   constructor() {
     if (!Tooltip.instance) {
@@ -16,10 +17,8 @@ class Tooltip {
     this.element = document.createElement('div');
     this.element.className = 'tooltip';
     
-    document.querySelectorAll('[data-tooltip]').forEach(target => {
-      target.addEventListener('pointerover', event => this.handleEnter(event));
-      target.addEventListener('pointerout', event => this.handleExit(event));
-    })
+    document.addEventListener('pointerover', this.handleEnter);
+    document.addEventListener('pointerout', this.handleExit);
   }
 
   render(text) {
@@ -27,14 +26,20 @@ class Tooltip {
     document.body.append(this.element)
   }
 
-  handleExit(event) {
-    this.element.remove()
-    event.target.removeEventListener('pointermove', this.updatePositionFromEvent)
+  handleExit = (event) => {
+    if (event.target.dataset.tooltip !== undefined) {
+      this.currentTarget = event.target;
+      this.element.remove()
+      this.currentTarget.removeEventListener('pointermove', this.updatePositionFromEvent)
+    }
   }
 
-  handleEnter(event) {
-    this.render(event.target.dataset.tooltip)
-    event.target.addEventListener('pointermove', this.updatePositionFromEvent)
+  handleEnter = (event) => {
+    if (event.target.dataset.tooltip !== undefined) {
+      this.currentTarget = event.target;
+      this.render(this.currentTarget.dataset.tooltip);
+      this.currentTarget.addEventListener('pointermove', this.updatePositionFromEvent);
+    }
   }
 
   updatePositionFromEvent(event) {
@@ -43,6 +48,11 @@ class Tooltip {
   }
 
   destroy() {
+    document.removeEventListener('pointerover', this.handleEnter);
+    document.removeEventListener('pointerout', this.handleExit);
+    if (this.currentTarget) {
+      this.currentTarget.removeEventListener('pointermove', this.updatePositionFromEvent)
+    }
     this.element.remove()
   }
 }
