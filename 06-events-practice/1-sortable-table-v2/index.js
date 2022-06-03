@@ -31,41 +31,42 @@ export default class SortableTable {
 
     const wrapper = document.createElement('div')
     wrapper.innerHTML = this.template
+    this.element = wrapper.firstElementChild
 
-    this.subElements = { 
-      header : wrapper.querySelector('[data-element="header"]'),
-      body : wrapper.querySelector('[data-element="body"]'),
-      sortArrow: arrow.firstElementChild
-    }
+    this.subElements = this.getSubElements(this.element);
+    this.subElements.arrow = arrow.firstElementChild;
 
-    Array.from(this.subElements.header.children)
-      .filter(header => header.dataset.sortable === 'true')
-      .forEach(header => header.addEventListener('pointerdown', (event) => this.sortEventHandler(event)));
+    document.addEventListener('pointerdown', this.clickSortHandler)
 
     this.refreshSortHeaders(this.sorted.id, this.sorted.order)
-
-    this.element = wrapper.firstElementChild
   }
 
-  sortEventHandler(event) {
-    const field = event.currentTarget.dataset.id
-    let order = 'desc'
-    if (event.currentTarget.dataset.order === 'desc') {
-      order = 'asc'
+  clickSortHandler = (event) => {
+    if (event.target.dataset.sortable === 'true') {
+      const field = event.target.dataset.id
+      const order = event.target.dataset.order === 'desc' ? 'asc' : 'desc';
+  
+      this.sortData(field, order)
+      this.refreshSortHeaders(field, order)
+      this.subElements.body.innerHTML = this.getBody()
     }
+  }
 
-    this.sortData(field, order)
-    this.refreshSortHeaders(field, order)
-    this.subElements.body.innerHTML = this.getBody()
+  getSubElements(element) {
+    const children = element.querySelectorAll('[data-element]')
+    return [...children].reduce( (target, subElement) => {
+      target[subElement.dataset.element] = subElement;
+      return target;
+    }, {});
   }
 
   refreshSortHeaders(field, order) {
-    this.subElements.sortArrow.remove();
+    this.subElements.arrow.remove();
 
     [...this.subElements.header.children].forEach(column => {
       if (column.dataset.id === field) {
         column.dataset.order = order;
-        column.append(this.subElements.sortArrow)
+        column.append(this.subElements.arrow)
       } else {
         column.removeAttribute('data-order');
       }
@@ -134,6 +135,7 @@ export default class SortableTable {
   }
 
   destroy() {
+    document.removeEventListener('pointerdown', this.clickSortHandler)
     this.element.remove()
   }
 }
