@@ -2,7 +2,7 @@ import fetchJson from './utils/fetch-json.js';
 
 const BACKEND_URL = 'https://course-js.javascript.ru';
 
-export const defaultHeight = 50;
+const defaultHeight = 50;
 
 export default class ColumnChart {
 
@@ -35,19 +35,19 @@ export default class ColumnChart {
 
         this.element = wrapper.firstElementChild;
         this.subElements = this.getSubElements(this.element);
-
-        if (!this.link) {
-            this.subElements.link.remove()
-            delete this.subElements.link;
-        }
     }
 
     getSubElements(element) {
         const children = element.querySelectorAll('[data-element]')
-        return [...children].reduce( (target, subElement) => {
+        const subElements = [...children].reduce( (target, subElement) => {
           target[subElement.dataset.element] = subElement;
           return target;
         }, {});
+
+        if (!this.link) {
+            subElements.link.remove()
+            delete subElements.link;
+        }
     }
 
     get template() {
@@ -65,7 +65,7 @@ export default class ColumnChart {
         `
     }
 
-    update(dateFrom = this.range.from, dateTo = this.range.to) {
+    async update(dateFrom = this.range.from, dateTo = this.range.to) {
         this.element.classList.add('column-chart_loading');
 
         const { body } = this.subElements;
@@ -76,12 +76,9 @@ export default class ColumnChart {
         url.searchParams.append('from', dateFrom.toISOString());
         url.searchParams.append('to', dateTo.toISOString());
 
-        return fetch(url.toString())
-            .then(response => response.json())
-            .then(data => {
-                this.updateContent(data);
-                return data;
-            });
+        const data = await fetchJson(url);
+        this.updateContent(data);
+        return data;
     }
 
     updateContent(data) {

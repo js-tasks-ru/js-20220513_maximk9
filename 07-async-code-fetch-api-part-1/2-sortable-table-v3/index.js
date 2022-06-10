@@ -18,8 +18,8 @@ export default class SortableTable {
     this.url = url;
     this.data = data;
     this.sorted = {
-      id: sorted.id ?? this.headerConfig.filter(header => header.sortable).shift().id,
-      order: sorted.order ?? 'asc'
+      id: sorted.id || this.headerConfig.filter(header => header.sortable).shift().id,
+      order: sorted.order || 'asc'
     };
     this.end = DEFAULT_ITEMS_PER_PAGE;
     this.fullyLoaded = false;
@@ -54,42 +54,40 @@ export default class SortableTable {
     }, {});
   }
 
-  refresh() {
+  async refresh() {
     if (this.isSortLocally) {
       this.sortOnClient(this.sorted.id, this.sorted.order);
       this.subElements.body.innerHTML = this.getBody(this.data.slice(0, this.end));
-      return Promise.resolve();
     } else {
-      return this.sortOnServer(this.sorted.id, this.sorted.order)
-        .then((serverData) => {
-          if (serverData.length === 0) {
-            this.element.classList.add('sortable-table_empty');
-          } else {
-            this.element.classList.remove('sortable-table_empty');
-          }
-          this.data = serverData;
-          this.subElements.body.innerHTML = this.getBody();
-        });
+      const serverData = await this.sortOnServer(this.sorted.id, this.sorted.order);
+
+      this.toggleClassWhen(serverData.length === 0, this.element, 'sortable-table_empty')
+
+      this.data = serverData;
+      this.subElements.body.innerHTML = this.getBody();
     }
   }
 
   clickSortHandler = (event) => {
     const header = event.target.closest('[data-id]');
-    if (header && header.dataset.sortable === 'true') {
-      if (this.sorted.id != header.dataset.id) {
-        header.append(this.subElements.arrow);
-        if (!this.isSortLocally) {
-          this.fullyLoaded = false;
-          this.end = DEFAULT_ITEMS_PER_PAGE;
-        }
-      }
-
-      this.sorted.id = header.dataset.id
-      this.sorted.order = header.dataset.order === 'desc' ? 'asc' : 'desc';
-      header.dataset.order = this.sorted.order;
-  
-      this.refresh();
+    if (!header || header.dataset.sortable !== 'true') {
+      return;
     }
+
+    if (this.sorted.id != header.dataset.id) {
+      header.append(this.subElements.arrow);
+
+      if (!this.isSortLocally) {
+        this.fullyLoaded = false;
+        this.end = DEFAULT_ITEMS_PER_PAGE;
+      }
+    }
+
+    this.sorted.id = header.dataset.id
+    this.sorted.order = header.dataset.order === 'desc' ? 'asc' : 'desc';
+    header.dataset.order = this.sorted.order;
+
+    this.refresh();
   }
 
   scrollHandler = (event) => {
@@ -104,7 +102,7 @@ export default class SortableTable {
     let pageData = []
     if (!this.isSortLocally) {
       pageData = await this.loadData(this.sorted.id, this.sorted.order, this.end, this.end + DEFAULT_ITEMS_PER_PAGE)
-      this.data = this.data.concat(pageData)
+      this.data = [...this.data, ...pageData]
     } else {
       pageData = this.data.slice(this.end, this.end + DEFAULT_ITEMS_PER_PAGE)
     }
@@ -126,10 +124,11 @@ export default class SortableTable {
 
     this.element.classList.add('sortable-table_loading');
 
-    return fetch(url.toString()).then(response => {
+    try {
+      return fetchJson(url);
+    } finally {
       this.element.classList.remove('sortable-table_loading');
-      return response.json();
-    });     
+    }
   }
 
   // artificial function only to satisfy bundled test 
@@ -162,6 +161,14 @@ export default class SortableTable {
 
   getBody(data = this.data) {
     return data.map(item => this.rowTemplate(item)).join('')
+  }
+
+  toggleClassWhen(condition, element, className) {
+    if (condition) {
+      element.classList.add(className)
+    } else {
+      element.classList.remove(className)
+    }
   }
 
   get template() {
