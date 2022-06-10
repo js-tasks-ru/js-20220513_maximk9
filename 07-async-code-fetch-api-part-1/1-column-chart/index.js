@@ -48,6 +48,8 @@ export default class ColumnChart {
             subElements.link.remove()
             delete subElements.link;
         }
+
+        return subElements;
     }
 
     get template() {
