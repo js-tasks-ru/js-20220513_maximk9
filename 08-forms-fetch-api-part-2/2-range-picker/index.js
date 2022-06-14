@@ -17,10 +17,7 @@ export default class RangePicker {
         this.locale = 'ru-RU';
         this.from = new Date(from.getFullYear(), from.getMonth(), from.getDate());
         this.to = new Date(to.getFullYear(), to.getMonth(), to.getDate());
-
-        this.leftMonth = new Date(this.to);
-        this.leftMonth.setMonth(this.leftMonth.getMonth() - 1, 1);
-        this.rightMonth = new Date(this.to);
+        this.selectedDate = null;
 
         this.render();
     }
@@ -35,12 +32,6 @@ export default class RangePicker {
         this.updateInput();
 
         this.subElements.input.addEventListener('click', this.toggleHandler);
-    }
-
-    renderMonth() {
-        const wrapper = document.createElement('div');
-        wrapper.innerHTML = this.calendarTemplate;
-        return wrapper.firstElementChild;
     }
 
     closeHandler = (event) => {
@@ -67,20 +58,21 @@ export default class RangePicker {
 
     selectionHandler(event) {
         const selectedDate = new Date(event.target.dataset.value);
-        if (this.to) {
-            // first click
-            this.from = selectedDate;
-            this.to = null;
-            this.updateMonths(false);
+        // first click
+        if (!this.selectedDate) {
+            this.selectedDate = selectedDate;
+            this.updateMonths(true);
         } else {
+            this.from = this.selectedDate;
             this.to = selectedDate;
             if (this.from > this.to) {
                 this.to = this.from;
                 this.from = selectedDate;
             }
+            this.selectedDate = null;
 
             this.updateInput();
-            this.updateMonths(false);
+            this.updateMonths(true);
 
             this.element.dispatchEvent(new CustomEvent('date-select', {
                 detail: { from: this.from, to: this.to }
@@ -103,23 +95,35 @@ export default class RangePicker {
         let wrapper = document.createElement('div');
         wrapper.innerHTML = this.controlsTemplate;
 
+        const [leftMonth, rightMonth] = [this.renderCalendar(), this.renderCalendar()];
+
         selector.append(...wrapper.children);
-        selector.append(this.renderMonth(), this.renderMonth());
+        selector.append(leftMonth, rightMonth);
+
+        const previousMonth = new Date(this.to);
+        previousMonth.setMonth(previousMonth.getMonth() - 1, 1);
+        leftMonth.dataset.value = previousMonth;
+
+        rightMonth.dataset.value = this.to;
         
         selector.addEventListener('click', this.selectorClickHandler);
-      }
 
-      this.updateInput();
-      this.updateMonths(true);       
+        this.updateInput();
+        this.updateMonths();
+      }     
 
       window.addEventListener('click', this.closeHandler);
       this.element.classList.add('rangepicker_open');
     }
 
     shiftMonths(delta) {
-        this.leftMonth.setMonth(this.leftMonth.getMonth() + delta);
-        this.rightMonth.setMonth(this.rightMonth.getMonth() + delta);
-        this.updateMonths(true);
+        this.element.querySelectorAll('.rangepicker__calendar').forEach(month => {
+            const date = new Date(month.dataset.value);
+            date.setMonth(date.getMonth() + delta);
+            month.dataset.value = date;
+        });
+
+        this.updateMonths();
     }
 
     updateInput() {
@@ -128,13 +132,22 @@ export default class RangePicker {
         to.textContent = this.to.toLocaleDateString(this.locale);
     }
 
-    updateMonths(redraw = false) {
+    updateMonths(onlySelection = false) {
       const [ leftMonth, rightMonth ] = this.element.querySelectorAll('.rangepicker__calendar');
-      this.updateMonth(leftMonth, this.leftMonth, redraw);
-      this.updateMonth(rightMonth, this.rightMonth, redraw);
+      if (!onlySelection) {
+        this.updateMonth(leftMonth);
+        this.updateMonth(rightMonth);
+      }
+
+      const from = this.selectedDate || this.from;
+      const to = this.selectedDate || this.to;
+
+      this.updateMonthSelection(leftMonth, from, to);
+      this.updateMonthSelection(rightMonth, from, to);
     }
 
-    updateMonth(calendarElement, date, redraw) {
+    updateMonth(calendarElement) {
+        const date = new Date(calendarElement.dataset.value);
         const current = new Date(date);
         current.setDate(1);
 
@@ -145,38 +158,36 @@ export default class RangePicker {
         timeElement.datatime = monthName;
 
         const grid = calendarElement.querySelector('.rangepicker__date-grid');
-        let buttons = [];
-        if (redraw) {
-            grid.innerHTML = '';
-        } else {
-            buttons = [...grid.children];
-        }
+        grid.innerHTML = '';
 
         while (current.getMonth() == date.getMonth()) {
-            if (buttons.length < current.getDate()) {
-                const button = document.createElement('button');
-                buttons.push(button);
-                grid.append(button);
-            }
-            const button = buttons[current.getDate() - 1];
-            button.className = 'rangepicker__cell';
-            button.dataset.value = current.toISOString();
-            if (current.getTime() === this.from.getTime()) {
-                button.classList.add('rangepicker__selected-from');
-            }
-            if (current.getTime() > this.from.getTime() && this.to && current.getTime() < this.to.getTime()) {
-                button.classList.add('rangepicker__selected-between');
-            }
-            if (this.to && current.getTime() === this.to.getTime()) {
-                button.classList.add('rangepicker__selected-to');
-            }
+            const cell = document.createElement('button');
+            cell.dataset.value = current.toISOString();
+            cell.textContent = current.getDate();
+
             // first day of the month
             if (current.getDate() === 1) {
-                button.style['--start-from'] = current.getDay() || SUNDAY; 
+                cell.style['--start-from'] = current.getDay() || SUNDAY; 
             }
-            button.textContent = current.getDate();
+
+            grid.append(cell);
 
             current.setDate(current.getDate() + 1);
+        }
+    }
+
+    updateMonthSelection(calendarElement, from, to) {
+        const grid = calendarElement.querySelector('.rangepicker__date-grid');
+        for (const cell of grid.children) {
+            const date = new Date(cell.dataset.value);
+            cell.className = 'rangepicker__cell';
+            if (date.getTime() === from.getTime()) {
+                cell.classList.add('rangepicker__selected-from');
+            } else if (date.getTime() > from && date < to) {
+                cell.classList.add('rangepicker__selected-between');
+            } else if (date.getTime() === to.getTime()) {
+                cell.classList.add('rangepicker__selected-to');
+            }
         }
     }
 
@@ -199,24 +210,26 @@ export default class RangePicker {
         this.subElements = null;
     }
 
-    get calendarTemplate() {
-      return `
-        <div class="rangepicker__calendar">
-          <div class="rangepicker__month-indicator">
-            <time datetime="November">November</time>
-          </div>
-          <div class="rangepicker__day-of-week">
-            <div>Пн</div>
-            <div>Вт</div>
-            <div>Ср</div>
-            <div>Чт</div>
-            <div>Пт</div>
-            <div>Сб</div>
-            <div>Вс</div>
-          </div>
-          <div class="rangepicker__date-grid"></div>
-        </div>
-      `
+    renderCalendar() {
+        const wrapper = document.createElement('div');
+        wrapper.innerHTML = `
+            <div class="rangepicker__calendar">
+            <div class="rangepicker__month-indicator">
+                <time datetime="November">November</time>
+            </div>
+            <div class="rangepicker__day-of-week">
+                <div>Пн</div>
+                <div>Вт</div>
+                <div>Ср</div>
+                <div>Чт</div>
+                <div>Пт</div>
+                <div>Сб</div>
+                <div>Вс</div>
+            </div>
+            <div class="rangepicker__date-grid"></div>
+            </div>`;
+
+        return wrapper.firstElementChild;
     }
 
     get controlsTemplate() {
