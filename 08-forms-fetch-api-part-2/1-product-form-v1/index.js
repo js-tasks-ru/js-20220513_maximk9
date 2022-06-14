@@ -146,7 +146,7 @@ export default class ProductForm {
       }
     });
 
-    const eventType = newProduct ? 'product-created' : 'product-updated';
+    const eventType = newProduct ? 'product-saved' : 'product-updated';
     this.element.dispatchEvent(new CustomEvent(eventType, { detail: { id: updatedProduct.id }}))
   }
 
