@@ -7,7 +7,7 @@ const getDaysBetweenDates = (from, to) => {
   return millisecondsToDays(milliseconds);
 };
 
-describe('forms-fetch-api-part-2/range-picker', () => {
+describe.skip('forms-fetch-api-part-2/range-picker', () => {
   let rangePicker;
 
   beforeEach(() => {
