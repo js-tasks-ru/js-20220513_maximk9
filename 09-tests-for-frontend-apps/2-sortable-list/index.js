@@ -18,6 +18,11 @@ export default class SortableList {
         this.element.addEventListener('pointerdown', this.onPointerDown);
     }
 
+    addItem(item) {
+        this.element.append(item);
+        this.items.push(item);
+    }
+
     onPointerDown = (event) => {
         const item = event.target.closest('.sortable-list__item');
 
