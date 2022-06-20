@@ -60,11 +60,15 @@
   const contentNode = document.querySelector('#content');
 
   async function initialize () {
+    document.querySelector('main').classList.add('is-loading');
+
     const page = new Page();
     const element = await page.render();
 
     contentNode.innerHTML = '';
     contentNode.append(element);
+
+    document.querySelector('main').classList.remove('is-loading');
   }
 
   initialize();

@@ -12,6 +12,7 @@ export default class ColumnChart {
     link = '',
     formatHeading = data => data,
     url = '',
+    className,
     range = {
       from: new Date(),
       to: new Date(),
@@ -22,6 +23,7 @@ export default class ColumnChart {
     this.label = label;
     this.link = link;
     this.formatHeading = formatHeading;
+    this.className = className;
 
     this.render();
   }
@@ -33,6 +35,9 @@ export default class ColumnChart {
     element.innerHTML = this.template;
 
     this.element = element.firstElementChild;
+    if (this.className) {
+      this.element.classList.add(this.className);
+    }
     this.subElements = this.getSubElements(this.element);
 
     this.loadData(from, to);
