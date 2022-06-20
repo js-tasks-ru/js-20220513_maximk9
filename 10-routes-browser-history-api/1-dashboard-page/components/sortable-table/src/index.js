@@ -78,8 +78,6 @@ export default class SortableTable {
     this.step = step;
     this.start = start;
     this.end = end;
-
-    //this.render();
   }
 
   async render() {

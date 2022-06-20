@@ -31,20 +31,17 @@ export default class Page {
             'ordersChart': new ColumnChart({
                 'label': 'Заказы',
                 'url': '/api/dashboard/orders',
-                'className': 'dashboard__chart_orders',
                 'range': range
             }),
             'salesChart': new ColumnChart({
                 'label': 'Продажи',
                 'url': '/api/dashboard/sales',
-                'className': 'dashboard__chart_sales',
                 'range': range,
                 'formatHeading': value => this.currencyFormat.format(value)
             }),
             'customersChart': new ColumnChart({
                 'label': 'Клиенты',
                 'url': '/api/dashboard/customers',
-                'className': 'dashboard__chart_customers',
                 'range': range
             }),
             'sortableTable': new SortableTable(
@@ -66,8 +63,11 @@ export default class Page {
             this.subElements[stub.dataset.element] = element;
         });
 
-        const { rangePicker } = this.subElements;
+        const { rangePicker, ordersChart, salesChart, customersChart } = this.subElements;
         rangePicker.addEventListener('date-select', this.rangeUpdate);
+        ordersChart.classList.add('dashboard__chart_orders');
+        salesChart.classList.add('dashboard__chart_sales');
+        customersChart.classList.add('dashboard__chart_customers');
 
         return this.element;
     }
