@@ -4,8 +4,6 @@ describe('routes-browser-history-api/dashboard-page', () => {
   let dashboardPage;
 
   beforeEach(async () => {
-    fetchMock.dontMock();
-    
     dashboardPage = new DashboardPage();
     const element = await dashboardPage.render();
 
