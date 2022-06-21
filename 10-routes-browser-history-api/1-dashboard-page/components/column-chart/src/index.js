@@ -22,8 +22,6 @@ export default class ColumnChart {
     this.label = label;
     this.link = link;
     this.formatHeading = formatHeading;
-
-    this.render();
   }
 
   render() {
