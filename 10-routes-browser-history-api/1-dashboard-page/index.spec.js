@@ -14,6 +14,7 @@ describe('routes-browser-history-api/dashboard-page', () => {
   });
 
   afterEach(() => {
+    fetchMock.resetMocks();
     dashboardPage.destroy();
     dashboardPage = null;
   });
